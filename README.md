@@ -78,14 +78,14 @@ Notes:
 ### Deployment
 
 - Build the UI and server (assets embedded into the binary):
-  - `bun run build` then `cargo build --manifest-path server/Cargo.toml --release`
-- Static binary (default): builds for MUSL by default using server/.cargo/config.toml
-  - Output binary: `server/target/x86_64-unknown-linux-musl/release/zfs-stats-web`
+  - `bun run build` then `cargo build --release`
+- Static binary (default): builds for MUSL by default using `.cargo/config.toml`
+  - Output binary: `target/x86_64-unknown-linux-musl/release/zfs-stats-web`
 
 Copy to server and run:
 
 ```
-scp server/target/x86_64-unknown-linux-musl/release/zfs-stats-web user@your-server:/opt/zfs-stats/
+scp target/x86_64-unknown-linux-musl/release/zfs-stats-web user@your-server:/opt/zfs-stats/
 ssh user@your-server 'cd /opt/zfs-stats && HOST=0.0.0.0 PORT=8080 RUST_LOG=info ./zfs-stats-web'
 ```
 
@@ -101,13 +101,13 @@ Build a fully static Linux binary using MUSL:
 ```
 rustup target add x86_64-unknown-linux-musl
 RUSTFLAGS="-C target-feature=+crt-static" \
-  cargo build --manifest-path server/Cargo.toml --release --target x86_64-unknown-linux-musl
+  cargo build --release --target x86_64-unknown-linux-musl
 ```
 
-Result: `server/target/x86_64-unknown-linux-musl/release/zfs-stats-web`
+Result: `target/x86_64-unknown-linux-musl/release/zfs-stats-web`
 
 Notes:
-- `server/.cargo/config.toml` sets `musl-gcc` as the linker for the MUSL target. Install `musl-tools` (Debian/Ubuntu) or equivalent.
+- `.cargo/config.toml` sets `musl-gcc` as the linker for the MUSL target. Install `musl-tools` (Debian/Ubuntu) or equivalent.
 - Logs print to stdout by default. Adjust verbosity via `RUST_LOG`, e.g. `RUST_LOG=info,tower_http=info`.
 
 ## Development
@@ -144,20 +144,21 @@ src/
 │   └── zfsStore.ts             # ZFS data management
 └── bindings.ts                 # Types exported from Rust (Specta)
 
-server/
+Rust (Axum server):
 ├── src/
 │   ├── main.rs                 # Axum server + embedded assets
 │   ├── lib.rs                  # Exposes shared types module
 │   ├── types.rs                # Shared ZFS types (serde + specta)
 │   └── bin/export_types.rs     # Specta types exporter -> src/bindings.ts
-└── Cargo.toml
+├── Cargo.toml
+└── .cargo/config.toml          # MUSL static build defaults
 ```
 
 ## Architecture
 
 ### Data Flow
 
-1. **Frontend** calls `commands.getZfsStats()` from generated bindings
+1. **Frontend** fetches `/api/zfs`
 2. **Rust backend** executes `zfs list -t all -j` using tokio::process::Command
 3. **JSON parsing** converts ZFS output to structured Rust types
 4. **Data processing** organizes pools, filesystems, snapshots, and bookmarks

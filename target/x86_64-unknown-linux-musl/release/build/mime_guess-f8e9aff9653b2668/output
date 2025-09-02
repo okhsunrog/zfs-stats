@@ -1,0 +1,1 @@
+cargo:rustc-env=MIME_TYPES_GENERATED_PATH=/home/okhsunrog/code/web/zfs-stats/target/x86_64-unknown-linux-musl/release/build/mime_guess-f8e9aff9653b2668/out/mime_types_generated.rs

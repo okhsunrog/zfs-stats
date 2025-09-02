@@ -1,7 +1,0 @@
-[target.x86_64-unknown-linux-musl]
-linker = "musl-gcc"
-
-# If you prefer zig for cross-compiling, comment the line above
-# and uncomment the following (requires zig installed):
-# linker = "zig cc -target x86_64-linux-musl"
-

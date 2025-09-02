@@ -29,9 +29,9 @@ Use Bun for all package and script tasks. Do not mix with npm/yarn/pnpm.
   - Specta bindings: `src/bindings.ts` (generated during dev)
 
 - Backend (Axum + Rust)
-  - `server/src/main.rs`: Axum server (serves embedded `dist/`, exposes `/api/zfs`)
-  - `server/src/types.rs`: Shared ZFS types (`serde` + optional `specta::Type`)
-  - `server/src/bin/export_types.rs`: Exports TS types to `src/bindings.ts`
+  - `src/main.rs`: Axum server (serves embedded `dist/`, exposes `/api/zfs`)
+  - `src/types.rs`: Shared ZFS types (`serde` + optional `specta::Type`)
+  - `src/bin/export_types.rs`: Exports TS types to `src/bindings.ts`
   - Dependencies: tokio, axum, rust-embed, serde/serde_json
 
 ## ZFS-Specific Architecture
@@ -58,7 +58,7 @@ The main ZFS functionality is implemented in the server `get_zfs_stats()` handle
 
 ## Adding/Updating Types with Specta (optional)
 
-1) Ensure types derive `specta::Type` in `server/src/types.rs`.
+1) Ensure types derive `specta::Type` in `src/types.rs`.
 
 2) Export to TS by running:
 
@@ -91,7 +91,7 @@ This branch does not use Tauri events. If you need server push, consider Server-
 
 ## Version Compatibility
 
-- Keep Rust crate versions in `server/Cargo.toml` compatible. No Tauri plugins in this branch.
+- Keep Rust crate versions in `Cargo.toml` compatible. No Tauri plugins in this branch.
 
 ## Script Reference (Bun)
 
@@ -124,7 +124,7 @@ Key data types:
 
 ## When Extending the ZFS App
 
-- **New API Endpoints**: Add routes in `server/src/main.rs` (or split into modules), return JSON.
+- **New API Endpoints**: Add routes in `src/main.rs` (or split into modules), return JSON.
 - **UI Components**: Place ZFS-specific components in `src/components/zfs/`.
 - **Data Processing**: Extend the Pinia store in `src/stores/zfsStore.ts`.
 - **Size Parsing**: Use existing helper functions for consistent size formatting.
