@@ -1,0 +1,2 @@
+(PropertySource, Property, DatasetProperties, Dataset, OutputVersion, ZfsListOutput, ZfsStats)
+(PropertySource, Property, DatasetProperties, Dataset, OutputVersion, ZfsListOutput, ZfsStats): specta::r#type::NamedType

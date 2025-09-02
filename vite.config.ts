@@ -5,8 +5,6 @@ import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import { THEMES, DEFAULT_THEME } from './src/constants/themes'
-
-const host = process.env.TAURI_DEV_HOST
 const isProduction = process.env.NODE_ENV === 'production'
 // const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -33,22 +31,11 @@ export default defineConfig({
   // 1. prevent vite from obscuring rust errors
   clearScreen: false,
 
-  // 2. tauri expects a fixed port, fail if that port is not available
+  // Standard dev server config
   server: {
-    port: 1420,
-    strictPort: true,
-    host: host || false,
-    hmr: host
-      ? {
-          protocol: 'ws',
-          host,
-          port: 1421,
-        }
-      : undefined,
-    watch: {
-      // tell vite to ignore watching `src-tauri`
-      ignored: ['**/src-tauri/**'],
-    },
+    port: 5173,
+    strictPort: false,
+    host: false,
   },
 
   resolve: {

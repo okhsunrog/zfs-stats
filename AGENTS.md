@@ -1,16 +1,18 @@
-# AGENTS.md — ZFS Statistics Dashboard
+# AGENTS.md — ZFS Statistics Dashboard (Axum Web Branch)
 
-This document is a concise playbook for AI agents (and humans) developing this ZFS Statistics Dashboard built with Tauri + Vue. It covers the project layout, core workflows, ZFS-specific features, and "gotchas" to keep changes safe, consistent, and shippable.
+This document is a concise playbook for AI agents (and humans) developing this ZFS Statistics Dashboard built with Vue + Axum. It covers the project layout, core workflows, ZFS-specific features, and "gotchas" to keep changes safe, consistent, and shippable.
 
 ## Project Overview
 
-This is a desktop application that provides a beautiful, real-time dashboard for monitoring ZFS storage systems. The app executes `zfs list -t all -j` commands and presents the data in an intuitive UI with detailed statistics, usage graphs, and management views.
+This branch migrates the app from Tauri to a pure web architecture: a Vue 3 frontend built with Vite and an Axum (Rust) backend that serves the built assets from an embedded bundle and exposes a `/api/zfs` endpoint. Desktop/Tauri content in this document is not applicable for this branch.
 
 ## TL;DR Commands (Bun)
 
 - Install: `bun install` (resolves and installs dependencies)
-- Dev: `bun tauri dev` (runs Vite + Tauri, generates Specta bindings, streams logs)
-- Build: `bun tauri build` (packs installers/bundles)
+- Dev (FE): `bun run dev`
+- Build (FE): `bun run build`
+- Run server: `bun run server`
+- Export TS types from Rust: `bun run types:export`
 - Lint/Format/Types:
   - `bun lint`, `bun lint:check`
   - `bun format`, `bun format:check`
@@ -26,19 +28,16 @@ Use Bun for all package and script tasks. Do not mix with npm/yarn/pnpm.
   - Theme toggle: `src/components/common/ThemeToggle.vue` (DaisyUI Theme Controller)
   - Specta bindings: `src/bindings.ts` (generated during dev)
 
-- Backend (Tauri 2 + Rust)
-  - `src-tauri/src/lib.rs`: builds the Tauri app, registers Specta commands/events, initializes plugins
-  - `src-tauri/src/commands/mod.rs`: ZFS commands (`get_zfs_stats`) and utilities, plus example commands
-  - `src-tauri/src/logging.rs`: tracing subscriber for stdout logging
-  - Plugins enabled: dialog, fs, log, os
-  - Dependencies: tokio (for async process execution), serde/serde_json (for ZFS JSON parsing)
-  - Capabilities (ACL): `src-tauri/capabilities/default.json`
-  - Config (JSON5): `src-tauri/tauri.conf.json5` (icons, dev hooks)
+- Backend (Axum + Rust)
+  - `server/src/main.rs`: Axum server (serves embedded `dist/`, exposes `/api/zfs`)
+  - `server/src/types.rs`: Shared ZFS types (`serde` + optional `specta::Type`)
+  - `server/src/bin/export_types.rs`: Exports TS types to `src/bindings.ts`
+  - Dependencies: tokio, axum, rust-embed, serde/serde_json
 
 ## ZFS-Specific Architecture
 
 ### Core ZFS Command
-The main ZFS functionality is implemented in `get_zfs_stats()` command which:
+The main ZFS functionality is implemented in the server `get_zfs_stats()` handler which:
 1. Executes `zfs list -t all -j` using tokio::process::Command
 2. Parses the JSON output into structured Rust types
 3. Organizes data into pools, filesystems, snapshots, and bookmarks
@@ -51,51 +50,27 @@ The main ZFS functionality is implemented in `get_zfs_stats()` command which:
 - `src/components/zfs/PoolDetails.vue`: Detailed view of filesystems, snapshots, and bookmarks per pool
 
 ### Data Flow
-1. Frontend calls `commands.getZfsStats()` from bindings
+1. Frontend fetches `/api/zfs`
 2. Rust executes ZFS command and parses JSON
 3. Data is returned as structured types to Vue store
 4. Store processes data for UI consumption (size parsing, percentage calculations)
 5. Components reactively display organized stats with usage graphs and tables
 
-## Adding a New Rust Command (with Specta)
+## Adding/Updating Types with Specta (optional)
 
-1) Implement in `src-tauri/src/commands/mod.rs`:
+1) Ensure types derive `specta::Type` in `server/src/types.rs`.
 
-```rust
-#[tauri::command]
-#[specta::specta]
-pub async fn do_something(arg: String) -> Result<String, String> {
-    tracing::info!("do_something called: {}", arg);
-    Ok(format!("processed: {}", arg))
-}
+2) Export to TS by running:
+
+```
+bun run types:export
 ```
 
-2) Register it in `src-tauri/src/lib.rs`:
+This overwrites `src/bindings.ts` with types-only declarations.
 
-```rust
-let specta_builder = tauri_specta::Builder::<tauri::Wry>::new()
-    .commands(tauri_specta::collect_commands![
-        commands::greet,
-        commands::get_zfs_stats,
-        commands::do_something,
-    ])
-    .events(tauri_specta::collect_events![logging::LogEvent]);
-```
+## Events
 
-3) Run `bun tauri dev` to regenerate `src/bindings.ts` and use it on the frontend via `import { commands } from '@/bindings'` (or call via `invoke('do_something', { arg })`).
-
-## Adding an Event
-
-1) Define a serializable type and derive Specta Event in Rust:
-
-```rust
-#[derive(Debug, Clone, serde::Serialize, specta::Type, tauri_specta::Event)]
-pub struct MyEvent { pub message: String }
-```
-
-2) Add it to `.events(collect_events![...])` in `lib.rs` and emit via `app_handle.emit("my-event", MyEvent { ... })`.
-
-3) After `bun tauri dev`, consume in FE via Specta bindings: `events.myEvent.listen(cb)`.
+This branch does not use Tauri events. If you need server push, consider Server-Sent Events (SSE) or WebSockets from Axum, and mirror types with Specta as needed.
 
 ## Logging
 
@@ -103,10 +78,9 @@ pub struct MyEvent { pub message: String }
 - Logs are output to stdout for debugging and development.
 
 
-## Permissions & Capabilities
+## Permissions
 
-- Edit `src-tauri/capabilities/default.json` to grant only what’s needed (dialog/fs/log/os are enabled by default here). Keep least-privilege in mind.
-- If you add a new plugin, mirror JS and Rust versions and extend capabilities accordingly.
+- Ensure the server process has permission to read ZFS datasets.
 
 ## Theming (DaisyUI v5)
 
@@ -115,20 +89,16 @@ pub struct MyEvent { pub message: String }
 
 - Latest DaisyUI docs for LLMs: https://daisyui.com/llms.txt
 
-## Version Compatibility (Important)
+## Version Compatibility
 
-- Keep plugin versions aligned between NPM and Rust crates (same major/minor). Examples:
-  - `@tauri-apps/plugin-log` v2.7.x ↔ `tauri-plugin-log` 2.7.x
-  - `@tauri-apps/plugin-fs` v2.4.x ↔ `tauri-plugin-fs` 2.4.x
-  - `@tauri-apps/plugin-os` v2.3.x ↔ `tauri-plugin-os` 2.3.x
-  - `@tauri-apps/plugin-dialog` v2.4.x ↔ `tauri-plugin-dialog` 2.4.x
+- Keep Rust crate versions in `server/Cargo.toml` compatible. No Tauri plugins in this branch.
 
 ## Script Reference (Bun)
 
-- `bun install` – Resolves and installs dependencies from `bun.lock`
-- `bun tauri dev` – Dev (Vite + Tauri, generates Specta bindings)
-- `bun run dev:test` – Test dev server compilation and auto-stop when ready
-- `bun tauri build` – Build installers/bundles
+- `bun install` – Resolves and installs dependencies
+- `bun run dev` – Vite dev server
+- `bun run build` – Build frontend assets
+- `bun run server` – Run Axum server (serves embedded assets)
 - `bun type-check` – `vue-tsc` project check
 - `bun lint` / `bun lint:check` – ESLint
 - `bun format` / `bun format:check` – Prettier
@@ -136,7 +106,6 @@ pub struct MyEvent { pub message: String }
 ## Security Notes
 
 - Current CSP is `null` to ease development; consider tightening for production.
-- FS plugin permissions include `fs:allow-write-text-file`; restrict as needed.
 
 ## ZFS System Requirements
 
@@ -155,25 +124,24 @@ Key data types:
 
 ## When Extending the ZFS App
 
-- **New ZFS Commands**: Add to `src-tauri/src/commands/mod.rs` and register in `lib.rs`
-- **UI Components**: Place ZFS-specific components in `src/components/zfs/`
-- **Data Processing**: Extend the Pinia store in `src/stores/zfsStore.ts`
-- **Size Parsing**: Use existing helper functions for consistent size formatting
-- **Error Handling**: ZFS commands can fail due to permissions or missing datasets
-- **Regenerate bindings** by running the dev task after Rust changes
-- Keep UI theming in sync with DaisyUI variables; extend `themes.ts` if adding themes
-- Avoid mixing package managers; use Bun only
-- Do not introduce i18n unless explicitly requested
+- **New API Endpoints**: Add routes in `server/src/main.rs` (or split into modules), return JSON.
+- **UI Components**: Place ZFS-specific components in `src/components/zfs/`.
+- **Data Processing**: Extend the Pinia store in `src/stores/zfsStore.ts`.
+- **Size Parsing**: Use existing helper functions for consistent size formatting.
+- **Error Handling**: ZFS commands can fail due to permissions or missing datasets.
+- **Regenerate bindings** by running `bun run types:export` after Rust type changes.
+- Keep UI theming in sync with DaisyUI variables; extend `themes.ts` if adding themes.
+- Avoid mixing package managers; use Bun only.
+- Do not introduce i18n unless explicitly requested.
 
 ## Minimal Validation Checklist
 
-1) `bun tauri dev` launches (no version mismatch errors)
-2) Theme loads as `nord` by default; toggle to `dim` works
-3) ZFS dashboard loads and displays stats (if ZFS is available)
-4) Refresh button works and updates data
-5) Pool tabs switch correctly and show filesystem/snapshot details
+1) `bun run build` succeeds; `dist/` contains assets
+2) `bun run server` starts and serves `http://localhost:8080`
+3) Theme loads as `nord` by default; toggle to `dim` works
+4) ZFS dashboard loads and displays stats (if ZFS is available)
+5) Refresh button works and updates data
 6) `bun lint:check`, `bun format:check`, and `bun type-check` pass
-7) `bun tauri build` succeeds
 
 ## ZFS Testing Notes
 

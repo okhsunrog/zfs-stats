@@ -1,6 +1,6 @@
-# ZFS Statistics Dashboard
+# ZFS Statistics Dashboard (Web)
 
-A beautiful, real-time desktop application for monitoring ZFS storage systems. Built with Tauri, Rust, Vue 3, and TypeScript.
+A beautiful, real-time web application for monitoring ZFS storage systems. Built with Vue 3 + TypeScript for the UI and a Rust Axum server that embeds the built frontend into a single static binary.
 
 ![ZFS Stats Dashboard](https://via.placeholder.com/800x600/2563eb/ffffff?text=ZFS+Statistics+Dashboard)
 
@@ -21,9 +21,9 @@ A beautiful, real-time desktop application for monitoring ZFS storage systems. B
 - **ZFS Installation**: System must have ZFS installed with `zfs` command available
 - **Permissions**: Read access to ZFS datasets (may require root or sudo permissions)
 - **Node.js/Bun**: For development and building
-- **Rust**: For Tauri backend compilation
+- **Rust**: For Axum server compilation
 
-## Quick Start
+## Quick Start (Web)
 
 ```bash
 # Clone the repository
@@ -34,25 +34,78 @@ cd zfs-stats
 bun install
 
 # Run in development mode
-bun tauri dev
+bun run types:export # optional (placeholder exists)
 
-# Build for production
-bun tauri build
+# Build for production (frontend)
+bun run build
+
+# Start the Axum server (serves embedded dist/)
+bun run server
 ```
+
+## Axum Web App (Embedded Assets)
+
+This branch uses a standalone Axum web server that serves the built frontend from an embedded asset bundle and exposes the ZFS API over HTTP.
+
+Steps:
+
+1) Build the frontend (creates `dist/`):
+
+```
+bun run build
+```
+
+2) Run the Axum server (embeds `dist/` at compile time):
+
+```
+bun run server
+```
+
+3) Open the app in your browser:
+
+```
+http://localhost:8080
+```
+
+API endpoints:
+- `GET /api/zfs` – Returns organized ZFS stats (pools, filesystems, snapshots, bookmarks, totals)
+
+Notes:
+- Re-run the server after rebuilding the frontend to re-embed updated assets.
+- The server binds to `0.0.0.0:8080` by default. Configure via `HOST` and `PORT` env vars.
+- Requires ZFS to be installed and accessible in PATH.
+
+### Static Binary (Linux)
+
+Build a fully static Linux binary using MUSL:
+
+```
+rustup target add x86_64-unknown-linux-musl
+RUSTFLAGS="-C target-feature=+crt-static" \
+  cargo build --manifest-path server/Cargo.toml --release --target x86_64-unknown-linux-musl
+```
+
+Result: `server/target/x86_64-unknown-linux-musl/release/zfs-stats-web`
+
+Notes:
+- `server/.cargo/config.toml` sets `musl-gcc` as the linker for the MUSL target. Install `musl-tools` (Debian/Ubuntu) or equivalent.
+- Logs print to stdout by default. Adjust verbosity via `RUST_LOG`, e.g. `RUST_LOG=info,tower_http=info`.
 
 ## Development
 
 This project uses:
 - **Frontend**: Vue 3 + TypeScript + Vite + DaisyUI + Tailwind CSS
-- **Backend**: Tauri 2 + Rust + Tokio
+- **Backend**: Rust (Axum + Tokio)
 - **State Management**: Pinia
-- **Type Safety**: Specta for Rust ↔ TypeScript bindings
+- **Type Safety**: Specta (optional) for generating TS types
 
 ### Commands
 
 - `bun install` - Install dependencies
-- `bun tauri dev` - Start development server
-- `bun tauri build` - Build production app
+- `bun run dev` - Vite dev server (frontend only)
+- `bun run build` - Build frontend (dist/)
+- `bun run server` - Run Axum server (serves embedded dist/)
+- `bun run types:export` - Generate `src/bindings.ts` from Rust types (Specta)
 - `bun lint` / `bun lint:check` - ESLint
 - `bun format` / `bun format:check` - Prettier
 - `bun type-check` - TypeScript validation
@@ -66,17 +119,19 @@ src/
 │   │   ├── ZfsDashboard.vue    # Main dashboard component
 │   │   └── PoolDetails.vue     # Pool-specific details
 │   └── common/
+├── lib/
+│   └── api.ts                  # HTTP client for /api/zfs
 ├── stores/
 │   └── zfsStore.ts             # ZFS data management
-└── bindings.ts                 # Auto-generated Rust bindings
+└── bindings.ts                 # Types exported from Rust (Specta)
 
-src-tauri/
+server/
 ├── src/
-│   ├── commands/
-│   │   └── mod.rs              # ZFS commands and data structures
-│   ├── lib.rs                  # App initialization
-│   └── logging.rs              # Stdout logging
-└── Cargo.toml                  # Rust dependencies
+│   ├── main.rs                 # Axum server + embedded assets
+│   ├── lib.rs                  # Exposes shared types module
+│   ├── types.rs                # Shared ZFS types (serde + specta)
+│   └── bin/export_types.rs     # Specta types exporter -> src/bindings.ts
+└── Cargo.toml
 ```
 
 ## Architecture
@@ -100,15 +155,7 @@ See `ZFS_DATA_STRUCTURE.md` for detailed format documentation.
 
 ## Permissions
 
-ZFS commands typically require elevated permissions. You may need to:
-
-```bash
-# Run with sudo (not recommended for GUI apps)
-sudo bun tauri dev
-
-# Or configure ZFS permissions for your user
-# Add your user to appropriate groups or configure sudo rules
-```
+ZFS commands typically require elevated permissions. Configure your user or run the server with appropriate privileges to read datasets.
 
 ## Error Handling
 
@@ -140,8 +187,7 @@ Toggle between themes using the theme switcher in the top-right corner.
 
 ## Development Notes
 
-- See `AGENTS.md` for detailed development guide
-- TypeScript bindings are auto-generated from Rust types
-- Use `bun tauri dev` to regenerate bindings after Rust changes
+- See `AGENTS.md` for detailed development guide (desktop content may refer to Tauri)
+- TypeScript bindings can be generated from Rust types via Specta (`bun run types:export`)
 - Keep UI components in `src/components/zfs/` for organization
 - Extend the Pinia store for new data processing features

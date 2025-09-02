@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { commands, type ZfsStats, type Dataset } from '@/bindings'
+import type { ZfsStats, Dataset } from '@/bindings'
+import { getZfsStats } from '@/lib/api'
 
 export const useZfsStore = defineStore('zfs', () => {
   const stats = ref<ZfsStats | null>(null)
@@ -13,13 +14,9 @@ export const useZfsStore = defineStore('zfs', () => {
     error.value = null
 
     try {
-      const result = await commands.getZfsStats()
-      if (result.status === 'ok') {
-        stats.value = result.data
-        lastUpdated.value = new Date()
-      } else {
-        error.value = result.error
-      }
+      const data = await getZfsStats()
+      stats.value = data
+      lastUpdated.value = new Date()
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to fetch ZFS stats'
       console.error('Failed to fetch ZFS stats:', err)
