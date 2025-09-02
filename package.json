@@ -1,5 +1,5 @@
 {
-  "name": "tauri_template",
+  "name": "zfs-stats",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,8 @@
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "format": "prettier --write src/",
-    "format:check": "prettier --check src/"
+    "format:check": "prettier --check src/",
+    "dev:test": "./dev-test.sh"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.8.0",
@@ -21,8 +22,6 @@
     "@tauri-apps/plugin-os": "^2.3.1",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.5.0",
-    "@xterm/addon-fit": "^0.10.0",
-    "@xterm/xterm": "^5.5.0",
     "vue": "^3.5.21"
   },
   "devDependencies": {

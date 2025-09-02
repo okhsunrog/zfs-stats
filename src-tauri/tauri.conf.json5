@@ -1,8 +1,8 @@
 {
   // JSON5 config for Tauri (comments allowed)
-  productName: "Tauri Template",
+  productName: "ZFS Statistics Dashboard",
   version: "0.1.0",
-  identifier: "dev.okhsunrog.tauri-template",
+  identifier: "dev.okhsunrog.zfs-stats",
 
   build: {
     // Dev config
@@ -17,7 +17,7 @@
   app: {
     windows: [
       {
-        title: "Tauri Template",
+        title: "ZFS Statistics Dashboard",
         width: 1050,
         height: 820,
         resizable: true,
@@ -32,10 +32,6 @@
   bundle: {
     active: true,
     targets: "nsis",
-
-    android: {
-      versionCode: 1000002,
-    },
 
     icon: [
       "icons/32x32.png",

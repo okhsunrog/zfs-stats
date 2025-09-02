@@ -6,11 +6,14 @@ use tracing::info;
 pub fn run() {
     // Setup Specta builder and register commands/events
     let specta_builder = tauri_specta::Builder::<tauri::Wry>::new()
-        .commands(tauri_specta::collect_commands![commands::greet, commands::emit_test_logs])
-        .events(tauri_specta::collect_events![logging::LogEvent]);
+        .commands(tauri_specta::collect_commands![
+            commands::greet, 
+            commands::get_zfs_stats
+        ])
+        .events(tauri_specta::collect_events![]);
 
-    // Export TypeScript bindings in debug mode on desktop
-    #[cfg(all(debug_assertions, not(target_os = "android")))]
+    // Export TypeScript bindings in debug mode
+    #[cfg(debug_assertions)]
     {
         let _ = specta_builder.export(
             specta_typescript::Typescript::default()
@@ -29,11 +32,10 @@ pub fn run() {
 
     builder
         .setup(move |app| {
-            // init tracing/logging and mount events
-            logging::init_tracing(app.handle().clone());
+            // init tracing/logging
+            logging::init_tracing();
             info!("Logging initialized.");
             specta_builder.mount_events(app);
-            info!("Specta events mounted.");
             Ok(())
         })
         .run(tauri::generate_context!())

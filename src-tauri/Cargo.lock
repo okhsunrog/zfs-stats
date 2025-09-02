@@ -111,6 +111,7 @@ dependencies = [
  "tauri-plugin-log",
  "tauri-plugin-os",
  "tauri-specta",
+ "tokio",
  "tracing",
  "tracing-subscriber",
 ]

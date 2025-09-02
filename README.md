@@ -1,103 +1,147 @@
-# Tauri + Vue 3 Template (with Specta, Themes, Terminal)
+# ZFS Statistics Dashboard
 
-An opinionated Tauri 2 + Vue 3 template that mirrors a production setup:
+A beautiful, real-time desktop application for monitoring ZFS storage systems. Built with Tauri, Rust, Vue 3, and TypeScript.
 
-- Vue 3 + Vite 6 + TypeScript 5
-- Pinia + persisted state
-- Tailwind CSS v4 + DaisyUI v5 with matching terminal theme (nord/dim)
-- Integrated xterm.js terminal streaming Rust logs to the UI
-- Tauri 2 plugins (dialog, fs, log, os) with capabilities configured
-- Specta + tauri-specta for typed commands/events and generated bindings
-- ESLint (flat) + Prettier + TS project references
+![ZFS Stats Dashboard](https://via.placeholder.com/800x600/2563eb/ffffff?text=ZFS+Statistics+Dashboard)
 
 ## Features
 
-- Theming:
-  - DaisyUI themes: `nord` (light), `dim` (dark)
-  - Theme toggle (DaisyUI Theme Controller with icons)
-  - Default theme applied before the app mounts to avoid flashes
-- Terminal:
-  - xterm.js viewer with color palette derived from DaisyUI CSS variables
-  - Listens to Rust tracing logs via a Tauri event (`log-event`)
-  - “Emit Test Logs” button for quick visual validation
-- Tauri integration:
-  - Plugins: dialog, fs, log, os
-  - Capabilities set in `src-tauri/capabilities/default.json`
-  - JSON5 config (`src-tauri/tauri.conf.json5`) with extended icons
-- Specta bindings:
-  - Commands and events registered in Rust
-  - TypeScript bindings generated to `src/bindings.ts` in dev builds
-
-## Recommended IDE Setup
-
-- VS Code + Volar extension (disable Vetur)
-- Enable ESLint and Prettier extensions
+- **Real-time ZFS Monitoring**: Live statistics from `zfs list -t all -j`
+- **Beautiful UI**: Modern dashboard with DaisyUI themes (light/dark mode)
+- **Detailed Views**: 
+  - Pool overview with usage statistics
+  - Filesystem details with mountpoints and space usage
+  - Snapshot management and history
+  - Bookmark tracking for replication
+- **Interactive Charts**: Visual representation of storage usage
+- **Cross-platform**: Works on Linux, macOS, and other Unix-like systems with ZFS
 
 ## Requirements
 
-- Bun (package manager and script runner). Install from https://bun.sh
-- Rust toolchain (stable), plus platform-specific Tauri deps
+- **ZFS Installation**: System must have ZFS installed with `zfs` command available
+- **Permissions**: Read access to ZFS datasets (may require root or sudo permissions)
+- **Node.js/Bun**: For development and building
+- **Rust**: For Tauri backend compilation
 
-## Install (Bun)
+## Quick Start
 
-```sh
+```bash
+# Clone the repository
+git clone <repository-url>
+cd zfs-stats
+
+# Install dependencies
 bun install
-```
 
-## Run (development)
-
-```sh
+# Run in development mode
 bun tauri dev
-```
 
-This starts Vite and the Tauri shell, generates/refreshes `src/bindings.ts` for Specta in debug mode, and streams logs to the terminal panel.
-
-## Build (production)
-
-```sh
+# Build for production
 bun tauri build
 ```
 
-## Scripts (Bun)
+## Development
 
-- `bun tauri dev` – Full app dev (Vite + Tauri)
-- `bun tauri build` – Build installers/bundles
-- `bun type-check` – `vue-tsc` project check
-- `bun lint` – ESLint with fixes
-- `bun lint:check` – ESLint check only
-- `bun format` – Prettier write
-- `bun format:check` – Prettier check
+This project uses:
+- **Frontend**: Vue 3 + TypeScript + Vite + DaisyUI + Tailwind CSS
+- **Backend**: Tauri 2 + Rust + Tokio
+- **State Management**: Pinia
+- **Type Safety**: Specta for Rust ↔ TypeScript bindings
 
-## Project Structure
+### Commands
 
-- `src/components/common/ThemeToggle.vue` – DaisyUI theme controller (nord/dim)
-- `src/components/terminal/TerminalDisplay.vue` – xterm terminal bound to logs
-- `src/stores/terminalStore.ts` – Pinia store that listens to `log-event` and forwards `console.*` to plugin-log
-- `src/constants/themes.ts` – Theme constants and validator used by injector and UI
-- `vite.config.ts` – Vue plugin, DaisyUI theme injector, Vue DevTools (dev only), `base: './'`
-- `src-tauri/src/logging.rs` – Tracing subscriber that emits logs to the frontend
-- `src-tauri/src/commands/mod.rs` – Example commands (`greet`, `emit_test_logs`)
-- `src-tauri/src/lib.rs` – Tauri builder, plugin init, Specta registration
-- `src-tauri/tauri.conf.json5` – App config (JSON5), icons, dev/build hooks
-- `src-tauri/capabilities/default.json` – Capability ACLs for plugins
+- `bun install` - Install dependencies
+- `bun tauri dev` - Start development server
+- `bun tauri build` - Build production app
+- `bun lint` / `bun lint:check` - ESLint
+- `bun format` / `bun format:check` - Prettier
+- `bun type-check` - TypeScript validation
 
-## Theming Details (DaisyUI v5)
+### Project Structure
 
-- The theme injector (Vite plugin) injects DaisyUI with the `nord` + `dim` themes.
-- `index.html` applies the saved theme before mount to prevent a flash.
-- Terminal theme is computed from DaisyUI CSS variables and updates on theme changes.
+```
+src/
+├── components/
+│   ├── zfs/
+│   │   ├── ZfsDashboard.vue    # Main dashboard component
+│   │   └── PoolDetails.vue     # Pool-specific details
+│   └── common/
+├── stores/
+│   └── zfsStore.ts             # ZFS data management
+└── bindings.ts                 # Auto-generated Rust bindings
 
-## Tauri Plugins & Capabilities
+src-tauri/
+├── src/
+│   ├── commands/
+│   │   └── mod.rs              # ZFS commands and data structures
+│   ├── lib.rs                  # App initialization
+│   └── logging.rs              # Stdout logging
+└── Cargo.toml                  # Rust dependencies
+```
 
-Enabled plugins (JS + Rust):
+## Architecture
 
-- `@tauri-apps/plugin-dialog` / `tauri-plugin-dialog`
-- `@tauri-apps/plugin-fs` / `tauri-plugin-fs`
-- `@tauri-apps/plugin-log` / `tauri-plugin-log`
-- `@tauri-apps/plugin-os` / `tauri-plugin-os`
+### Data Flow
 
-Capabilities (`src-tauri/capabilities/default.json`) allow default use and file write.
+1. **Frontend** calls `commands.getZfsStats()` from generated bindings
+2. **Rust backend** executes `zfs list -t all -j` using tokio::process::Command
+3. **JSON parsing** converts ZFS output to structured Rust types
+4. **Data processing** organizes pools, filesystems, snapshots, and bookmarks
+5. **Vue components** reactively display organized statistics with charts and tables
+
+### ZFS Data Structure
+
+The application parses ZFS JSON output containing:
+- **Filesystems**: Mountable datasets with usage statistics
+- **Snapshots**: Point-in-time backups (names with `@`)
+- **Bookmarks**: Replication markers (names with `#`)
+
+See `ZFS_DATA_STRUCTURE.md` for detailed format documentation.
+
+## Permissions
+
+ZFS commands typically require elevated permissions. You may need to:
+
+```bash
+# Run with sudo (not recommended for GUI apps)
+sudo bun tauri dev
+
+# Or configure ZFS permissions for your user
+# Add your user to appropriate groups or configure sudo rules
+```
+
+## Error Handling
+
+The application gracefully handles:
+- Missing ZFS installation
+- Permission denied errors
+- Invalid or corrupted ZFS data
+- Network timeouts and system errors
+
+## Themes
+
+Supports DaisyUI themes:
+- **Nord** (light mode) - default
+- **Dim** (dark mode)
+
+Toggle between themes using the theme switcher in the top-right corner.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Ensure all tests pass: `bun lint:check && bun format:check && bun type-check`
+5. Submit a pull request
 
 ## License
 
-This template is provided as-is. You may adapt it for your projects.
+[MIT License](LICENSE)
+
+## Development Notes
+
+- See `AGENTS.md` for detailed development guide
+- TypeScript bindings are auto-generated from Rust types
+- Use `bun tauri dev` to regenerate bindings after Rust changes
+- Keep UI components in `src/components/zfs/` for organization
+- Extend the Pinia store for new data processing features

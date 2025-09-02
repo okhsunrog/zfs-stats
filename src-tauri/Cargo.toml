@@ -27,6 +27,7 @@ specta-typescript = { version = "0.0.9" }
 tauri-specta = { git = "https://github.com/specta-rs/tauri-specta", rev = "6fe9532", features = ["typescript", "derive"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
+tokio = { version = "1", features = ["process"] }
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.

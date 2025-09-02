@@ -8,24 +8,47 @@ export const commands = {
   async greet(name: string): Promise<string> {
     return await TAURI_INVOKE('greet', { name })
   },
-  async emitTestLogs(): Promise<void> {
-    await TAURI_INVOKE('emit_test_logs')
+  async getZfsStats(): Promise<Result<ZfsStats, string>> {
+    try {
+      return { status: 'ok', data: await TAURI_INVOKE('get_zfs_stats') }
+    } catch (e) {
+      if (e instanceof Error) throw e
+      else return { status: 'error', error: e as any }
+    }
   },
 }
 
 /** user-defined events **/
 
-export const events = __makeEvents__<{
-  logEvent: LogEvent
-}>({
-  logEvent: 'log-event',
-})
-
 /** user-defined constants **/
 
 /** user-defined types **/
 
-export type LogEvent = { message: string }
+export type Dataset = {
+  name: string
+  type: string
+  pool: string
+  createtxg: string
+  dataset?: string | null
+  snapshot_name?: string | null
+  properties: DatasetProperties
+}
+export type DatasetProperties = {
+  used: Property
+  available: Property
+  referenced: Property
+  mountpoint: Property
+}
+export type Property = { value: string; source: PropertySource }
+export type PropertySource = { type: string; data: string }
+export type ZfsStats = {
+  pools: string[]
+  filesystems: Dataset[]
+  snapshots: Dataset[]
+  bookmarks: Dataset[]
+  total_used: string
+  total_available: string
+}
 
 /** tauri-specta globals **/
 
