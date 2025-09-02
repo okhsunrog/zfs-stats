@@ -75,6 +75,25 @@ Notes:
 - The server binds to `0.0.0.0:8080` by default. Configure via `HOST` and `PORT` env vars.
 - Requires ZFS to be installed and accessible in PATH.
 
+### Deployment
+
+- Build the UI and server (assets embedded into the binary):
+  - `bun run build` then `cargo build --manifest-path server/Cargo.toml --release`
+- Static binary (default): builds for MUSL by default using server/.cargo/config.toml
+  - Output binary: `server/target/x86_64-unknown-linux-musl/release/zfs-stats-web`
+
+Copy to server and run:
+
+```
+scp server/target/x86_64-unknown-linux-musl/release/zfs-stats-web user@your-server:/opt/zfs-stats/
+ssh user@your-server 'cd /opt/zfs-stats && HOST=0.0.0.0 PORT=8080 RUST_LOG=info ./zfs-stats-web'
+```
+
+Environment variables:
+- `HOST`: bind address (default `0.0.0.0`)
+- `PORT`: bind port (default `8080`)
+- `RUST_LOG`: log filter (e.g. `info`, `debug`, `info,tower_http=info`)
+
 ### Static Binary (Linux)
 
 Build a fully static Linux binary using MUSL:
