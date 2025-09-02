@@ -4,6 +4,7 @@ This document is a concise playbook for AI agents (and humans) developing apps w
 
 ## TL;DR Commands (Bun)
 
+- Install: `bun install` (resolves and installs dependencies)
 - Dev: `bun tauri dev` (runs Vite + Tauri, generates Specta bindings, streams logs)
 - Build: `bun tauri build` (packs installers/bundles)
 - Lint/Format/Types:
@@ -99,6 +100,7 @@ pub struct MyEvent { pub message: String }
 
 ## Script Reference (Bun)
 
+- `bun install` – Resolves and installs dependencies from `bun.lock`
 - `bun tauri dev` – Dev (Vite + Tauri, generates Specta bindings)
 - `bun tauri build` – Build installers/bundles
 - `bun type-check` – `vue-tsc` project check
