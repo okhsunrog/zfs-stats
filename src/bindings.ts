@@ -5,9 +5,6 @@
 /** user-defined commands **/
 
 export const commands = {
-  async greet(name: string): Promise<string> {
-    return await TAURI_INVOKE('greet', { name })
-  },
   async getZfsStats(): Promise<Result<ZfsStats, string>> {
     try {
       return { status: 'ok', data: await TAURI_INVOKE('get_zfs_stats') }

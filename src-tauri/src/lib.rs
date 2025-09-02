@@ -7,7 +7,6 @@ pub fn run() {
     // Setup Specta builder and register commands/events
     let specta_builder = tauri_specta::Builder::<tauri::Wry>::new()
         .commands(tauri_specta::collect_commands![
-            commands::greet, 
             commands::get_zfs_stats
         ])
         .events(tauri_specta::collect_events![]);

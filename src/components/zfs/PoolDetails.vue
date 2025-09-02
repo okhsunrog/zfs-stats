@@ -103,12 +103,12 @@
       <h3 class="text-lg font-semibold mb-4">Bookmarks</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div v-for="bookmark in bookmarks" :key="bookmark.name" class="card bg-base-200 shadow">
-          <div class="card-body p-4">
-            <h4 class="card-title text-sm font-mono">
+          <div class="card-body p-4 break-words">
+            <h4 class="card-title text-sm font-mono whitespace-normal break-words">
               {{ bookmark.name.split('#')[1] || bookmark.name }}
             </h4>
             <div class="text-xs space-y-1">
-              <div>
+              <div class="whitespace-normal break-all">
                 <span class="font-medium">Dataset:</span>
                 {{ bookmark.name.split('#')[0] }}
               </div>

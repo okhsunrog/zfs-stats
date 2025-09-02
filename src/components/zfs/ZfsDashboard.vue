@@ -80,7 +80,7 @@
       <div class="card bg-base-100 shadow-xl">
         <div class="card-body">
           <h2 class="card-title">Storage Overview</h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="space-y-2">
               <div class="flex justify-between">
                 <span class="font-medium">Total Used:</span>
@@ -90,15 +90,18 @@
                 <span class="font-medium">Total Available:</span>
                 <span class="font-mono">{{ zfsStore.stats.total_available }}</span>
               </div>
-            </div>
-            <div class="space-y-2">
-              <div class="text-sm font-medium">Usage Distribution</div>
-              <div class="w-full bg-base-200 rounded-full h-4" :title="`${usagePercent}% used`">
-                <div
-                  class="bg-gradient-to-r from-primary to-secondary h-4 rounded-full transition-all duration-300"
-                  :style="{ width: `${Math.min(usagePercent, 100)}%` }"></div>
+              <div class="space-y-2">
+                <div class="text-sm font-medium">Usage Distribution</div>
+                <div class="w-full bg-base-200 rounded-full h-4" :title="`${usagePercent}% used`">
+                  <div
+                    class="bg-gradient-to-r from-primary to-secondary h-4 rounded-full transition-all duration-300"
+                    :style="{ width: `${Math.min(usagePercent, 100)}%` }"></div>
+                </div>
+                <div class="text-sm text-base-content/70">{{ usagePercent }}% used</div>
               </div>
-              <div class="text-sm text-base-content/70">{{ usagePercent }}% used</div>
+            </div>
+            <div class="md:col-span-2">
+              <SpaceOverview />
             </div>
           </div>
         </div>
@@ -118,7 +121,8 @@
             </button>
           </div>
 
-          <div v-if="selectedPool" class="mt-4">
+          <div v-if="selectedPool" class="mt-4 space-y-6">
+            <DatasetUsageBar :pool-name="selectedPool" :top-n="10" />
             <PoolDetails :pool-name="selectedPool" />
           </div>
         </div>
@@ -131,6 +135,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useZfsStore } from '@/stores/zfsStore'
 import PoolDetails from './PoolDetails.vue'
+import SpaceOverview from './charts/SpaceOverview.vue'
+import DatasetUsageBar from './charts/DatasetUsageBar.vue'
 
 const zfsStore = useZfsStore()
 const selectedPool = ref<string>('')

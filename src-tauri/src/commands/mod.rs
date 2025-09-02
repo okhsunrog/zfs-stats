@@ -2,17 +2,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tokio::process::Command;
 
-// Simple example command to demonstrate Specta + Tauri integration
-
-#[tauri::command]
-#[specta::specta]
-pub fn greet(name: String) -> String {
-    tracing::info!("Received greet request for {name}");
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
-
-
 // ZFS-related types and commands
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
